@@ -4,11 +4,17 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
         integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
     <style>
+        .jumbotron{
+            background-color:#3E8780;
+            padding-top:0%;
+            padding-bottom:0%;
+        }
         ul#menu li {
         display: inline;
         }
@@ -18,9 +24,16 @@
 </head>
 
 <body>
-    <div class="flex text-center">
-        <div class="border-b">
-            {% block title %}{% endblock %}
+    <div class="container-fluid p-0">
+        <div class="jumbotron">
+            <div class="row">
+                <div class="col-1 w3-xxlarge">
+                    <a href="/"><i class="fa fa-home" style="position:relative; top:5px;"></i></a>
+                </div>
+                <div style="position:relative; right:40px;">
+                    {% block title %}{% endblock %}
+                </div>
+            </div>
         </div>
     </div>
     {% block content %}{% endblock %}

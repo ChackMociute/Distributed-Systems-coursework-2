@@ -1,14 +1,13 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    <h1>Portfolio builder</h1>
+<h1><strong>Portfolio builder</strong></h1>
 {% endblock %}
 
 {% block content %}
-<div class="flex text-center">
-    <form action="" method="post" name="calculator">
-        {{ form.hidden_tag() }}
-        
+<form action="" method="post" name="calculator">
+    {{ form.hidden_tag() }}
+    <div class="container-fluid">
         <div class="row">
             <div class="col-6 offset-3">
                 {{ form.tickers(class_='form-control', style='height: 200px') }}
@@ -27,6 +26,6 @@
                 <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
             </div>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 {% endblock %}

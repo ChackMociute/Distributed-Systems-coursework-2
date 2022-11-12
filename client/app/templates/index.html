@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<div class="container-fluid">
+<div class="row">
+    <div class="col-lg-5 offset-lg-4 col-md-8 offset-md-2 col-sm-10 offset-sm-2">
+        <h1>Stock information</h1>
+    </div>
+</div>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+<div class="row">
+    <div class="col-8 offset-2">
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th class="col-1">Ticker</th>
+                {% for c in columns %}
+                <th class="col-1">{{ c }}</th>
+                {% endfor %}
+            </tr>
+            </thead>
+            <tbody>
+                {% for ticker, stock in data %}
+                <tr>
+                    <th>{{ ticker }}</th>
+                    <td>{{ stock.price }}</td>
+                    <td>{{ stock.eps }}</td>
+                    <td>{{ stock.bvps }}</td>
+                    <td>{{ stock.score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+{% endblock %}

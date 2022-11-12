@@ -15,10 +15,14 @@
     </style>
 
     <title>Portfolio builder</title>
-    {% block head %}{% endblock %}
 </head>
 
 <body>
+    <div class="flex text-center">
+        <div class="border-b">
+            {% block title %}{% endblock %}
+        </div>
+    </div>
     {% block content %}{% endblock %}
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

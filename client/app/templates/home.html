@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    <h1>Portfolio builder</h1>
+{% endblock %}
+
+{% block content %}
+<div class="flex text-center">
+    <form action="" method="post" name="calculator">
+        {{ form.hidden_tag() }}
+        
+        <div class="row">
+            <div class="col-6 offset-3">
+                {{ form.tickers(class_='form-control', style='height: 200px') }}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-3 offset-3">
+                {% for error in form.tickers.errors %}
+                <div class="alert alert-danger col-12" role="alert">
+                    [{{ error }}]
+                </div>
+                {% endfor %}
+            </div>
+
+            <div class="col-3 offset-6">
+                <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

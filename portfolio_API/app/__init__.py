@@ -9,17 +9,18 @@ api = Api(app)
 
 class PortfolioBuilder(Resource):
     def post(self):
-        scores = pd.read_json(request.form['scores'])
+        scores = pd.read_json(request.form['scores'], typ='series')
         cov = pd.read_json(request.form['cov'])
-        w, scores = self.balance(scores, cov, n=3)
-        return {'w': list(w), 'scores': scores.to_json()}
+        n = int(request.form['n'])
+        w, scores = self.balance(scores, cov, n)
+        return pd.DataFrame({'scores': scores, 'weight': w}).to_json()
     
-    def balance(self, scores, cov, n=None):
+    def balance(self, scores, cov, n):
         if n is None: n = len(scores)
         x = self.minimize(cov, scores)
         
         while(len(scores) > n):
-            i = np.argmin(x)
+            i = scores.index[np.argmin(x)]
             cov = cov.drop(i)
             cov = cov.drop(columns=i)
             scores = scores.drop(i)

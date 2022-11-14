@@ -11,22 +11,27 @@ import pandas as pd
 def home():
     form = StockForm()
     if form.validate_on_submit():
-        return redirect(url_for('stocks', tickers=','.join(list({tick.strip() for tick in form.tickers.data.split(',')}))))
+        return redirect(url_for('stocks',
+                                tickers=','.join(list({tick.strip() for tick in form.tickers.data.split(',')})),
+                                n=form.number.data))
     return render_template('home.html', form=form)
 
-
-@app.route('/stocks/<tickers>')
-def stocks(tickers=[]):
+@app.route('/stocks', defaults={'tickers': 'msft', 'n': None})
+@app.route('/stocks/<tickers><n>')
+def stocks(tickers, n):
     tickers = tickers.split(',')
     summary = create_summary_matrix(tickers)
     historic = create_historic_matrix(tickers)
     data = pd.read_json(req.post("http://127.0.0.1:1111", data={'data': summary.to_json()}).json())
     cov = pd.read_json(req.post("http://127.0.0.1:1111/cov", data={'data': historic.to_json()}).json())
-    print(cov)
-    return render_template('stocks.html', columns=data.columns, data=data.iterrows())
+    portfolio = pd.read_json(req.post("http://127.0.0.1:2222",
+                                      data={'scores': data.score.to_json(),
+                                            'cov': cov.to_json(),
+                                            'n': n}).json())
+    return render_template('stocks.html', columns=data.columns, stocks=data.iterrows(), portfolio=portfolio)
 
 def create_summary_matrix(tickers):
-    df = pd.DataFrame([get_summary_from_ticker(tick) for tick in tickers])
+    df = pd.DataFrame([get_summary_from_ticker(tick) for tick in tickers if tick != ''])
     df.dropna(axis=0, inplace=True)
     return df.set_index('ticker')
 
@@ -46,7 +51,7 @@ def get_summary_from_ticker(tick):
 
 def create_historic_matrix(tickers):
     p1, p2 = int(time.mktime((datetime.now() - 3*timedelta(days=365)).timetuple())), int(time.mktime(datetime.now().timetuple()))
-    return pd.DataFrame({tick: get_historic_from_ticker(tick, p1, p2) for tick in tickers}).astype(float)
+    return pd.DataFrame({tick: get_historic_from_ticker(tick, p1, p2) for tick in tickers if tick != ''}).astype(float)
 
 def get_historic_from_ticker(tick, p1, p2):
     data = req.get(f"https://query1.finance.yahoo.com/v7/finance/download/{tick}?period1={p1}&period2={p2}&interval=1mo",

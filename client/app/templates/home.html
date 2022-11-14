@@ -9,21 +9,29 @@
     {{ form.hidden_tag() }}
     <div class="container-fluid">
         <div class="row">
-            <div class="col-6 offset-3">
+            <div class="col-6 offset-1">
+                <p><h4><b>Enter tickers to evaluate (seperated by commas)</b></h4></p>
                 {{ form.tickers(class_='form-control', style='height: 200px') }}
             </div>
         </div>
-        <div class="row">
-            <div class="col-3 offset-3">
-                {% for error in form.tickers.errors %}
+        <div class="row" style="position:relative; top:10px;">
+            <div class="col-6 offset-1">
+                <p><h4><b>Number of different stocks you want in your portfolio</b></h4></p>
+                {{ form.number(class_='form-control')}}
+            </div>
+        </div>
+        <div class="row" style="position:relative; top:15px;">
+            <div class="col-3 offset-1">
+                <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+            </div>
+            <div class="col-3">
+                {% for item in form %}
+                {% for error in item.errors %}
                 <div class="alert alert-danger col-12" role="alert">
-                    [{{ error }}]
+                    {{ error }}
                 </div>
                 {% endfor %}
-            </div>
-
-            <div class="col-3 offset-6">
-                <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+                {% endfor %}
             </div>
         </div>
     </div>

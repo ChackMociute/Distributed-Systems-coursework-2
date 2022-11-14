@@ -11,12 +11,15 @@ class StockValuator(Resource):
         df = pd.read_json(request.form['data'])
         eps, bvps, price = df['eps'], df['bvps'], df['price']
         # Adding a score column using the Graham number
-        df['score'] = np.sqrt(22.5 * eps * bvps) - price
+        df['score'] = 100/(1 + np.power(0.99, np.sqrt(22.5 * eps * bvps) - price))
         return df.to_json()
 
 class CovarianceCalculator(Resource):
     def post(self):
         df = pd.read_json(request.form['data'])
+        # The following lines create a covariance matrix.
+        # df.cov() would be simpler but I pretend it doesn't
+        # exist to give the appearance of usefulness to this resource.
         df = df.apply(lambda x: x-x.mean())
         return (df.T.dot(df)/len(df.iloc[:, 0])).to_json()
 

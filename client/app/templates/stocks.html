@@ -7,7 +7,8 @@
 {% block content %}
 <div class="container-fluid">
 <div class="row">
-    <div class="col-8 offset-2">
+    <div class="col-6 offset-1">
+        <p><h4><b>Stock information</b></h4></p>
         <table class="table table-hover table-bordered">
             <thead>
             <tr>
@@ -18,13 +19,32 @@
             </tr>
             </thead>
             <tbody>
-                {% for ticker, stock in data %}
+                {% for ticker, stock in stocks %}
                 <tr>
                     <th>{{ ticker }}</th>
                     <td>{{ stock.price }}</td>
                     <td>{{ stock.eps }}</td>
                     <td>{{ stock.bvps }}</td>
                     <td>{{ stock.score }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <div class="col-3 offset-1">
+        <p><h4><b>Recommended portfolio</b></h4></p>
+        <table class="table table-hover table-bordered">
+            <thead>
+            <tr>
+                <th class="col-1">Ticker</th>
+                <th class="col-1">Portfolio percentage</th>
+            </tr>
+            </thead>
+            <tbody>
+                {% for ticker, weight in portfolio.index|zip(portfolio.weight) %}
+                <tr>
+                    <th>{{ ticker }}</th>
+                    <td>{{ weight }}</td>
                 </tr>
                 {% endfor %}
             </tbody>

@@ -59,7 +59,7 @@ class PortfolioBuilder(Resource):
             
     def minimize(self, cov, scores):
         constraints = ({'type': 'eq', 'fun': lambda x: 1 - sum(x)})
-        bounds = tuple((0.1/len(scores), 1) for _ in scores)
+        bounds = tuple((0.2/len(scores), 1) for _ in scores)
         
         return minimize(self.weights, np.ones(len(scores))/len(scores),
                         args=(cov, scores),

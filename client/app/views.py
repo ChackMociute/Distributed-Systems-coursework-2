@@ -44,10 +44,11 @@ def create_portfolio(name):
     tickers = pf.tickers.split(',')
     summary = create_summary_matrix(tickers)
     historic = create_historic_matrix(tickers)
-    stocks = pd.read_json(req.post(f"{API_ADDRESS}:{QUALITY_PORT}", data={'data': summary.to_json()}).json())
-    cov = pd.read_json(req.post(f"{API_ADDRESS}:{QUALITY_PORT}/cov", data={'data': historic.to_json()}).json())
+    stocks = pd.read_json(req.put(f"{API_ADDRESS}:{QUALITY_PORT}", data={'name': name, 'data': summary.to_json()}).json())
+    cov = pd.read_json(req.put(f"{API_ADDRESS}:{QUALITY_PORT}/cov", data={'name': name, 'data': historic.to_json()}).json())
     portfolio = pd.read_json(req.get(f"{API_ADDRESS}:{PORTFOLIO_PORT}",
-                                      data={'scores': stocks.score.to_json(),
+                                      data={'name': name,
+                                            'scores': stocks.score.to_json(),
                                             'cov': cov.to_json(),
                                             'n': pf.n}).json()).sort_values('weight', ascending=False)
     return portfolio, stocks.sort_values('score', ascending=False)

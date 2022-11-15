@@ -12,20 +12,17 @@
         <table class="table table-hover table-bordered">
             <thead>
             <tr>
-                <th class="col-1">Ticker</th>
-                {% for c in columns %}
-                <th class="col-1">{{ c }}</th>
-                {% endfor %}
+                <th class="col-1">Stock</th>
+                <th class="col-1 text-center">Price</th>
+                <th class="col-1 text-center">Score</th>
             </tr>
             </thead>
             <tbody>
                 {% for ticker, stock in stocks %}
                 <tr>
                     <th>{{ ticker }}</th>
-                    <td>{{ stock.price }}</td>
-                    <td>{{ stock.eps }}</td>
-                    <td>{{ stock.bvps }}</td>
-                    <td>{{ stock.score }}</td>
+                    <td class="text-center">{{ stock.price }}</td>
+                    <td class="text-center">{{'%0.2f'| format(stock.score|float)}}</td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -37,14 +34,14 @@
             <thead>
             <tr>
                 <th class="col-1">Ticker</th>
-                <th class="col-1">Portfolio percentage</th>
+                <th class="col-1 text-center">Portfolio percentage</th>
             </tr>
             </thead>
             <tbody>
                 {% for ticker, weight in portfolio.index|zip(portfolio.weight) %}
                 <tr>
                     <th>{{ ticker }}</th>
-                    <td>{{ weight }}</td>
+                    <td class="text-center">{{'%0.2f'| format(weight*100|float)}}%</td>
                 </tr>
                 {% endfor %}
             </tbody>

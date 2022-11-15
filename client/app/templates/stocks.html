@@ -38,7 +38,7 @@
             </tr>
             </thead>
             <tbody>
-                {% for ticker, weight in portfolio.index|zip(portfolio.weight) %}
+                {% for ticker, weight in portfolio.index|zip(portfolio) %}
                 <tr>
                     <th>{{ ticker }}</th>
                     <td class="text-center">{{'%0.2f'| format(weight*100|float)}}%</td>

@@ -82,7 +82,8 @@ class CovarianceCalculator(Resource):
         # df.cov() would be simpler but I pretend it doesn't
         # exist to give the appearance of usefulness to this method.
         df = df.apply(lambda x: x-x.mean())
-        return df.T.dot(df)/len(df.iloc[:, 0])
+        if len(df) == 0: return df.T.dot(df)
+        return df.T.dot(df)/len(df)
         
 
 api.add_resource(StockValuator, '/')

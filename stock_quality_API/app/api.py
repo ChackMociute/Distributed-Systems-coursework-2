@@ -39,9 +39,12 @@ class StockValuator(Resource):
     @staticmethod
     def evaluate():
         df = pd.read_json(request.form['data'])
-        eps, bvps, price = np.clip(df['eps'], 0, None), np.clip(df['bvps'], 0, None), df['price']
-        # Adding a score column using the Graham number
-        df['score'] = 100/(1 + np.power(0.99, np.sqrt(22.5 * eps * bvps) - price))
+        eps, bvps = np.clip(df['eps'], 0, None), np.clip(df['bvps'], 0, None)
+        
+        size_score = 100/(1 + np.power(0.98, (df['size']/1e9)-200))
+        cr_score = 100*np.power(4, -1*np.power(df['current_ratio']-2.25, 2))
+        graham_score = 100/(1 + np.power(0.99, np.sqrt(22.5 * eps * bvps) - df['price']))
+        df['score'] = (size_score + cr_score + graham_score)/3
         return df
 
 

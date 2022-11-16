@@ -12,6 +12,7 @@ class PortfolioBuilder():
     API_ADDRESS = "http://localhost"
     QUALITY_PORT = "1111"
     PORTFOLIO_PORT = "2222"
+    SUMMARY_COLUMNS = ['ticker', 'price', 'eps', 'bvps', 'size', 'current_ratio']
     
     def __init__(self, name):
         self.method = req.put if name is not None else req.post
@@ -30,7 +31,7 @@ class PortfolioBuilder():
                                               data={'name': self.name}).json(), typ='series')
         except ValueError: portfolio = self.pf.portfolio
         if stocks is None or portfolio is None: return pd.Series(), pd.DataFrame()
-        return portfolio, stocks
+        return portfolio.sort_values(ascending=False), stocks.sort_values('score', ascending=False)
 
     def create_portfolio(self):
         self.process_financial_data(*self.get_financial_data())
@@ -51,7 +52,7 @@ class PortfolioBuilder():
     def create_summary_matrix(self, tickers):
         df = pd.DataFrame([self.get_summary_from_ticker(tick) for tick in tickers
                            if tick != '' and self.get_summary_from_ticker(tick) is not None],
-                          columns=['ticker', 'price', 'eps', 'bvps'])
+                          columns=self.SUMMARY_COLUMNS)
         df.fillna(0, inplace=True)
         return df.set_index('ticker')
 
@@ -61,9 +62,11 @@ class PortfolioBuilder():
             data = data[0]
             eps = data['defaultKeyStatistics']['trailingEps']['raw']
             bvps = data['defaultKeyStatistics']['bookValue']['raw']
+            size = data['defaultKeyStatistics']['enterpriseValue']['raw']
             price = data['financialData']['currentPrice']['raw']
+            current = data['financialData']['currentRatio']['raw']
         except (KeyError, ValueError, TypeError): return
-        return pd.Series({'ticker': tick, 'price': price, 'eps': eps, 'bvps': bvps})
+        return pd.Series([tick, price, eps, bvps, size, current], index=self.SUMMARY_COLUMNS)
 
     def create_historic_matrix(self, tickers):
         p1, p2 = int(time.mktime((datetime.now() - 12*timedelta(days=365)).timetuple())), int(time.mktime(datetime.now().timetuple()))

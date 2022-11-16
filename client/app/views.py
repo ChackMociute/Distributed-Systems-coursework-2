@@ -21,13 +21,8 @@ def home():
 @app.route('/stocks/')
 @app.route('/stocks/<name>')
 def stocks(name=None):
-    # pb = PortfolioBuilder(name)
-    # pb.create_portfolio()
-    # pf = Portfolio.query.get(pb.name)
-    # portfolio, stocks = pd.read_json(pf.portfolio, typ='series'), pd.read_json(pf.stocks)
     get = request.args.get('get')
-    if bool(get) and get is not None:
-        portfolio, stocks = PortfolioBuilder(name).get_portfolio()
+    if bool(get) and get is not None: portfolio, stocks = PortfolioBuilder(name).get_portfolio()
     else: portfolio, stocks = PortfolioBuilder(name).create_portfolio()
     return render_template('stocks.html', stocks=stocks.iterrows(), portfolio=portfolio)
         

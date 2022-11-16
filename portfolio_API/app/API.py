@@ -55,7 +55,6 @@ class PortfolioBuilder(Resource):
             cov = cov.drop(columns=i)
             scores = scores.drop(i)
             x = self.minimize(cov, scores)
-        
         return x, scores
             
     def minimize(self, cov, scores):
@@ -69,6 +68,6 @@ class PortfolioBuilder(Resource):
     
     @staticmethod
     def weights(x, cov, scores):
-        return np.sqrt(x.dot(cov).dot(x))/x.dot(scores)
+        return np.sqrt(x.dot(cov).dot(x)) - x.dot(scores) + x.dot(x) * 100
 
 api.add_resource(PortfolioBuilder, '/')

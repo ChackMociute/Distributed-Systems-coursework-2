@@ -5,41 +5,72 @@
 {% endblock %}
 
 {% block content %}
+<div class="container-fluid">
+<div class="row">
+<div class="col-7">
 <form action="" method="post" name="calculator">
-    {{ form.hidden_tag() }}
-    <div class="container-fluid">
-        <div class="row">
-            <div class="col-6 offset-1">
-                <p><h4><b>Enter name of your portfolio</b></h4></p>
-                {{ form.name(class_='form-control') }}
-            </div>
+{{ form.hidden_tag() }}
+    <div class="col-11 offset-1">
+        <p><h2><b>Evaluate your stock selection and create a portfolio</b></h2></p>
+    </div>
+    <div class="row p-2">
+        <div class="col-11 offset-1">
+            <p><h4><b>Enter tickers to evaluate (seperated by commas)</b></h4></p>
+            {{ form.tickers(class_='form-control', style='height: 200px') }}
         </div>
-        <div class="row">
-            <div class="col-6 offset-1">
-                <p><h4><b>Enter tickers to evaluate (seperated by commas)</b></h4></p>
-                {{ form.tickers(class_='form-control', style='height: 200px') }}
-            </div>
+    </div>
+    <div class="row p-2">
+        <div class="col-5 offset-1">
+            <p><h4><b>Number of different stocks you want in your portfolio</b></h4></p>
+            {{ form.number(class_='form-control')}}
         </div>
-        <div class="row" style="position:relative; top:10px;">
-            <div class="col-6 offset-1">
-                <p><h4><b>Number of different stocks you want in your portfolio</b></h4></p>
-                {{ form.number(class_='form-control')}}
-            </div>
+        <div class="col-5 offset-1">
+            <p><h4><b>Enter name of your portfolio (Optional)</b></h4></p>
+            {{ form.name(class_='form-control') }}
         </div>
-        <div class="row" style="position:relative; top:15px;">
-            <div class="col-3 offset-1">
-                <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+    </div>
+    <div class="row p-2">
+        <div class="col-11 offset-1">
+            <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+        </div>
+        <div class="col-3">
+            {% for item in form %}
+            {% for error in item.errors %}
+            <div class="alert alert-danger col-12" role="alert">
+                {{ error }}
             </div>
-            <div class="col-3">
-                {% for item in form %}
-                {% for error in item.errors %}
-                <div class="alert alert-danger col-12" role="alert">
-                    {{ error }}
-                </div>
-                {% endfor %}
-                {% endfor %}
-            </div>
+            {% endfor %}
+            {% endfor %}
         </div>
     </div>
 </form>
+</div>
+<div class="col-3 offset-1">
+<form action="" method="post" name="calculator">
+{{ form.hidden_tag() }}
+    <div class="col-11 offset-1">
+        <p><h2><b>Alternatively enter name of your portfolio to see it again</b></h2></p>
+    </div>
+    <div class="row p-2">
+        <div class="col-11 offset-1">
+            <p><h4><b>Enter name of your portfolio</b></h4></p>
+            {{ form2.name(class_='form-control') }}
+        </div>
+    </div>
+    <div class="row p-2">
+        <div class="col-11 offset-1">
+            {% for error in form2.name.errors %}
+            <div class="alert alert-danger col-12" role="alert">
+                {{ error }}
+            </div>
+            {% endfor %}
+        </div>
+        <div class="col-11 offset-1">
+            <p><input type="submit" class="btn btn-primary col-12" value="Submit"></p>
+        </div>
+    </div>
+</form>
+</div>
+</div>
+</div>
 {% endblock %}

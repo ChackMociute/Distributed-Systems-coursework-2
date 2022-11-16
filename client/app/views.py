@@ -25,12 +25,10 @@ def home():
 
 @app.route('/stocks/<name>')
 def stocks(name):
-    portfolio, stocks = create_portfolio(name)
+    portfolio, stocks = PortfolioBuilder(name).create_portfolio()
     return render_template('stocks.html', stocks=stocks.iterrows(), portfolio=portfolio)
-
-
+        
 def update_db(form):
-    name = form.name.data
     tickers = ','.join(list({tick.strip() for tick in form.tickers.data.split(',')}))
     portfolio = Portfolio.query.get(name)
     if portfolio is None:
@@ -40,51 +38,65 @@ def update_db(form):
         portfolio.n = form.number.data
     db.session.commit()
 
-def create_portfolio(name):
-    pf = Portfolio.query.get(name)
-    tickers = pf.tickers.split(',')
-    summary = create_summary_matrix(tickers)
-    historic = create_historic_matrix(tickers)
-    common = list(set(summary.index).intersection(historic.columns))
-    summary = summary.loc[common]
-    historic = historic[common]
-    stocks = pd.read_json(req.put(f"{API_ADDRESS}:{QUALITY_PORT}", data={'name': name, 'data': summary.to_json()}).json())
-    cov = pd.read_json(req.put(f"{API_ADDRESS}:{QUALITY_PORT}/cov", data={'name': name, 'data': historic.to_json()}).json())
-    if len(stocks) == 0: return pd.DataFrame(), stocks.sort_values('score', ascending=False)
-    portfolio = pd.read_json(req.put(f"{API_ADDRESS}:{PORTFOLIO_PORT}",
-                                      data={'name': name,
-                                            'scores': stocks.score.to_json(),
-                                            'cov': cov.to_json(),
-                                            'n': pf.n}).json(), typ='series').sort_values(ascending=False)
-    return portfolio, stocks.sort_values('score', ascending=False)
+class PortfolioBuilder():
+    def __init__(self, name):
+        self.method = req.put if name is not None else req.post
+        self.name = name if name is not None else 'default'
+        self.portfolio = Portfolio.query.get(self.name)
 
-def create_summary_matrix(tickers):
-    df = pd.DataFrame([get_summary_from_ticker(tick) for tick in tickers
-                       if tick != '' and get_summary_from_ticker(tick) is not None])
-    df.fillna(0, inplace=True)
-    return df.set_index('ticker')
+    def create_portfolio(self):
+        self.process_financial_data(*self.get_financial_data())
+        return self.portfolio, self.stocks
 
-def get_summary_from_ticker(tick):
-    data = req.get(SUMMARY_API.format(tick), headers=HEADERS).json()['quoteSummary']['result']
-    # if data is None: return
-    try:
-        data = data[0]
-        eps = data['defaultKeyStatistics']['trailingEps']['raw']
-        bvps = data['defaultKeyStatistics']['bookValue']['raw']
-        price = data['financialData']['currentPrice']['raw']
-    except (KeyError, ValueError, TypeError): return
-    return pd.Series({'ticker': tick, 'price': price, 'eps': eps, 'bvps': bvps})
+    def get_financial_data(self):
+        tickers = self.portfolio.tickers.split(',')
+        summary = self.create_summary_matrix(tickers)
+        historic = self.create_historic_matrix(tickers)
+        common = list(set(summary.index).intersection(historic.columns))
+        summary = summary.loc[common]
+        historic = historic[common]
+        return summary, historic
 
-def create_historic_matrix(tickers):
-    p1, p2 = int(time.mktime((datetime.now() - 12*timedelta(days=365)).timetuple())), int(time.mktime(datetime.now().timetuple()))
-    return pd.DataFrame({tick: get_historic_from_ticker(tick, p1, p2) for tick in tickers
-                         if tick != '' and get_historic_from_ticker(tick, p1, p2) is not None}).astype(float).fillna(0)
+    def create_summary_matrix(self, tickers):
+        df = pd.DataFrame([self.get_summary_from_ticker(tick) for tick in tickers
+                           if tick != '' and self.get_summary_from_ticker(tick) is not None],
+                          columns=['ticker', 'price', 'eps', 'bvps'])
+        df.fillna(0, inplace=True)
+        return df.set_index('ticker')
 
-def get_historic_from_ticker(tick, p1, p2):
-    data = req.get(HISTORIC_API.format(tick, p1, p2), headers=HEADERS).text
-    data = [i.split(',') for i in data.split('\n')]
-    try: df = pd.DataFrame(data[1:], columns=data[0])[['Date', 'Close']]
-    except (KeyError, ValueError): return
-    df.Close = df.Close.str.replace('null', 'nan', regex=False)
-    df.Date = pd.to_datetime(df.Date.squeeze())
-    return df.set_index('Date').squeeze()
+    def get_summary_from_ticker(self, tick):
+        data = req.get(SUMMARY_API.format(tick), headers=HEADERS).json()['quoteSummary']['result']
+        try:
+            data = data[0]
+            eps = data['defaultKeyStatistics']['trailingEps']['raw']
+            bvps = data['defaultKeyStatistics']['bookValue']['raw']
+            price = data['financialData']['currentPrice']['raw']
+        except (KeyError, ValueError, TypeError): return
+        return pd.Series({'ticker': tick, 'price': price, 'eps': eps, 'bvps': bvps})
+
+    def create_historic_matrix(self, tickers):
+        p1, p2 = int(time.mktime((datetime.now() - 12*timedelta(days=365)).timetuple())), int(time.mktime(datetime.now().timetuple()))
+        return pd.DataFrame({tick: self.get_historic_from_ticker(tick, p1, p2) for tick in tickers
+                            if tick != '' and self.get_historic_from_ticker(tick, p1, p2) is not None}).astype(float).fillna(0)
+
+    def get_historic_from_ticker(self, tick, p1, p2):
+        data = req.get(HISTORIC_API.format(tick, p1, p2), headers=HEADERS).text
+        data = [i.split(',') for i in data.split('\n')]
+        try: df = pd.DataFrame(data[1:], columns=data[0])[['Date', 'Close']]
+        except (KeyError, ValueError): return
+        df.Close = df.Close.str.replace('null', 'nan', regex=False)
+        df.Date = pd.to_datetime(df.Date.squeeze())
+        return df.set_index('Date').squeeze()
+
+    def process_financial_data(self, summary, historic):
+        stocks = pd.read_json(self.method(f"{API_ADDRESS}:{QUALITY_PORT}",
+                                          data={'name': self.name, 'data': summary.to_json()}).json())
+        cov = pd.read_json(self.method(f"{API_ADDRESS}:{QUALITY_PORT}/cov",
+                                       data={'name': self.name, 'data': historic.to_json()}).json())
+        self.portfolio =  pd.read_json(self.method(f"{API_ADDRESS}:{PORTFOLIO_PORT}",
+                                                data={'name': self.name,
+                                                        'scores': stocks.score.to_json(),
+                                                        'cov': cov.to_json(),
+                                                        'n': self.portfolio.n}).json(),
+                                    typ='series').sort_values(ascending=False)
+        self.stocks = stocks.sort_values('score', ascending=False)

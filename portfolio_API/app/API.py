@@ -45,6 +45,7 @@ class PortfolioBuilder(Resource):
         return pd.Series(w, index=scores.index)
     
     def balance(self, scores, cov, n):
+        if len(scores) == 0: return [], scores
         if n is None: n = len(scores)
         x = self.minimize(cov, scores)
         

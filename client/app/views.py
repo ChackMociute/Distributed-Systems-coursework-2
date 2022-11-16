@@ -66,7 +66,7 @@ def create_summary_matrix(tickers):
 
 def get_summary_from_ticker(tick):
     data = req.get(SUMMARY_API.format(tick), headers=HEADERS).json()['quoteSummary']['result']
-    if data is None: return None
+    if data is None: return
     data = data[0]
     eps = data['defaultKeyStatistics']['trailingEps']['raw']
     bvps = data['defaultKeyStatistics']['bookValue']['raw']
@@ -80,9 +80,9 @@ def create_historic_matrix(tickers):
 
 def get_historic_from_ticker(tick, p1, p2):
     data = req.get(HISTORIC_API.format(tick, p1, p2), headers=HEADERS).text
-    if '404 Not Found' in data: return
     data = [i.split(',') for i in data.split('\n')]
-    df = pd.DataFrame(data[1:], columns=data[0])[['Date', 'Close']]
+    try: df = pd.DataFrame(data[1:], columns=data[0])[['Date', 'Close']]
+    except (KeyError, ValueError): return
     df.Close = df.Close.str.replace('null', 'nan', regex=False)
     df.Date = pd.to_datetime(df.Date.squeeze())
     return df.set_index('Date').squeeze()

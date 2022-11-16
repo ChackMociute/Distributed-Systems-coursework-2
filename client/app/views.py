@@ -66,11 +66,13 @@ def create_summary_matrix(tickers):
 
 def get_summary_from_ticker(tick):
     data = req.get(SUMMARY_API.format(tick), headers=HEADERS).json()['quoteSummary']['result']
-    if data is None: return
-    data = data[0]
-    eps = data['defaultKeyStatistics']['trailingEps']['raw']
-    bvps = data['defaultKeyStatistics']['bookValue']['raw']
-    price = data['financialData']['currentPrice']['raw']
+    # if data is None: return
+    try:
+        data = data[0]
+        eps = data['defaultKeyStatistics']['trailingEps']['raw']
+        bvps = data['defaultKeyStatistics']['bookValue']['raw']
+        price = data['financialData']['currentPrice']['raw']
+    except (KeyError, ValueError, TypeError): return
     return pd.Series({'ticker': tick, 'price': price, 'eps': eps, 'bvps': bvps})
 
 def create_historic_matrix(tickers):

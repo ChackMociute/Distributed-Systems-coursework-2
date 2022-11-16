@@ -9,12 +9,12 @@ from flask import render_template, redirect, url_for, request
 def home():
     form = StockForm()
     form2 = OldStockForm()
-    if form.validate_on_submit():
+    if form.submit1.data and form.validate_on_submit():
         name_provided = form.name.data != ''
         update_db(form, name_provided=name_provided)
         return redirect(url_for('stocks', name=form.name.data))
-    if form2.validate_on_submit():
-        return redirect(url_for('stocks', name=form2.name.data, get=True))
+    if form2.submit2.data and form2.validate_on_submit():
+        return redirect(url_for('stocks', name=form2.name2.data, get=True))
         
     return render_template('home.html', form=form, form2=form2)
 

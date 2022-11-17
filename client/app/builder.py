@@ -1,6 +1,7 @@
 from app import db
 from .models import Portfolio
 from datetime import datetime, timedelta
+from tqdm import tqdm
 import time
 import requests as req
 import pandas as pd
@@ -46,12 +47,14 @@ class PortfolioBuilder():
         return self.portfolio, self.stocks
 
     def process_financial_data(self, summary, historic):
+        print("\n\nPROCESSING DATA: Step 1/2")
         # Evaluate the stocks
         stocks = pd.read_json(self.method(f"{self.API_ADDRESS}:{self.QUALITY_PORT}",
                                           data={'name': self.name, 'data': summary.to_json()}).json())
         # Find the covariance matrix
         cov = pd.read_json(self.method(f"{self.API_ADDRESS}:{self.QUALITY_PORT}/cov",
                                        data={'name': self.name, 'data': historic.to_json()}).json())
+        print("\nPROCESSING DATA: Step 2/2")
         # Select stocks and balance the portfolio
         self.portfolio =  pd.read_json(self.method(f"{self.API_ADDRESS}:{self.PORTFOLIO_PORT}",
                                                 data={'name': self.name,
@@ -73,7 +76,8 @@ class PortfolioBuilder():
 
     # Returns matrix of stocks with metrics specified in self.SUMMARY_COLUMNS
     def create_summary_matrix(self, tickers):
-        df = pd.DataFrame([self.current_data for tick in tickers
+        print("RETRIEVING DATA: Step 1/2")
+        df = pd.DataFrame([self.current_data for tick in tqdm(tickers)
                            if self.summary_from_ticker(tick) is not None],
                           columns=self.SUMMARY_COLUMNS)
         return df.fillna(0).set_index('ticker')
@@ -100,10 +104,11 @@ class PortfolioBuilder():
 
     # Returns matrix of historic monthly closing prices for stocks over the last 12 years
     def create_historic_matrix(self, tickers):
+        print("\n\nRETRIEVING DATA: Step 2/2")
         # Unix time stamps for querying historic data
         p1 = int(time.mktime((datetime.now() - 12*timedelta(days=365)).timetuple()))
         p2 = int(time.mktime(datetime.now().timetuple()))
-        return pd.DataFrame({tick: self.current_data for tick in tickers
+        return pd.DataFrame({tick: self.current_data for tick in tqdm(tickers)
                              if self.historic_from_ticker(tick, p1, p2) is not None}
                             ).astype(float).fillna(0)
 

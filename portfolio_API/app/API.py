@@ -50,10 +50,12 @@ class PortfolioBuilder(Resource):
         x = self.minimize(cov, scores)
         
         while(len(scores) > n):
-            i = scores.index[np.argmin(x)]
-            cov = cov.drop(i)
-            cov = cov.drop(columns=i)
-            scores = scores.drop(i)
+            for _ in range(int(np.ceil((len(scores)-n)/5))):
+                i = scores.index[np.argmin(x)]
+                x = np.delete(x, np.argmin(x))
+                cov = cov.drop(i)
+                cov = cov.drop(columns=i)
+                scores = scores.drop(i)
             x = self.minimize(cov, scores)
         return x, scores
             
@@ -68,6 +70,6 @@ class PortfolioBuilder(Resource):
     
     @staticmethod
     def weights(x, cov, scores):
-        return np.sqrt(x.dot(cov).dot(x)) - x.dot(scores) + x.dot(x) * 100
+        return np.sqrt(x.dot(cov).dot(x)) - x.dot(scores) + x.dot(x) * 5 * len(x)
 
 api.add_resource(PortfolioBuilder, '/')

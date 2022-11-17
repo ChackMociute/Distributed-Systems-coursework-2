@@ -41,15 +41,17 @@ class PortfolioBuilder(Resource):
         scores = pd.read_json(request.form['scores'], typ='series')
         cov = pd.read_json(request.form['cov'])
         n = int(request.form['n'])
-        w, scores = self.balance(scores, cov, n)
-        return pd.Series(w, index=scores.index)
+        weights, scores = self.balance(scores, cov, n)
+        return pd.Series(weights, index=scores.index)
     
     def balance(self, scores, cov, n):
         if len(scores) == 0: return [], scores
         if n is None: n = len(scores)
         x = self.minimize(cov, scores)
         
+        # Drop stocks and recalculate weights until number of stocks equals n
         while(len(scores) > n):
+            # Drop 20% of remaining unwanted stocks rounded up at a time
             for _ in range(int(np.ceil((len(scores)-n)/5))):
                 i = scores.index[np.argmin(x)]
                 x = np.delete(x, np.argmin(x))
@@ -60,7 +62,9 @@ class PortfolioBuilder(Resource):
         return x, scores
             
     def minimize(self, cov, scores):
+        # Insure weights add up to 1
         constraints = ({'type': 'eq', 'fun': lambda x: 1 - sum(x)})
+        # Set boundaries for weights in [x; 1] where x is 20% of an equal share
         bounds = tuple((0.2/len(scores), 1) for _ in scores)
         
         return minimize(self.weights, np.ones(len(scores))/len(scores),
@@ -70,6 +74,7 @@ class PortfolioBuilder(Resource):
     
     @staticmethod
     def weights(x, cov, scores):
+        # Function to minimize takes into account variance, quality, and weight heterogeneity
         return np.sqrt(x.dot(cov).dot(x)) - x.dot(scores) + x.dot(x) * 5 * len(x)
 
 api.add_resource(PortfolioBuilder, '/')

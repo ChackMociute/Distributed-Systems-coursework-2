@@ -50,13 +50,13 @@ class PortfolioBuilder():
         return summary, historic
 
     def create_summary_matrix(self, tickers):
-        df = pd.DataFrame([self.get_summary_from_ticker(tick) for tick in tickers
-                           if tick != '' and self.get_summary_from_ticker(tick) is not None],
+        df = pd.DataFrame([self.current_data for tick in tickers
+                           if self.summary_from_ticker(tick) is not None],
                           columns=self.SUMMARY_COLUMNS)
         df.fillna(0, inplace=True)
         return df.set_index('ticker')
 
-    def get_summary_from_ticker(self, tick):
+    def summary_from_ticker(self, tick):
         data = req.get(self.SUMMARY_API.format(tick), headers=self.HEADERS).json()['quoteSummary']['result']
         try:
             data = data[0]
@@ -65,22 +65,30 @@ class PortfolioBuilder():
             size = data['defaultKeyStatistics']['enterpriseValue']['raw']
             price = data['financialData']['currentPrice']['raw']
             current = data['financialData']['currentRatio']['raw']
-        except (KeyError, ValueError, TypeError): return
-        return pd.Series([tick, price, eps, bvps, size, current], index=self.SUMMARY_COLUMNS)
+        except (ValueError, TypeError, IndexError): return
+        except KeyError:
+            if 'eps' not in locals(): eps = 0
+            if 'bvps' not in locals(): bvps = 0
+            if 'size' not in locals(): size = 0
+            if 'price' not in locals(): price = 0
+            if 'current' not in locals(): current = 0
+        self.current_data = pd.Series([tick, price, eps, bvps, size, current], index=self.SUMMARY_COLUMNS)
+        return True
 
     def create_historic_matrix(self, tickers):
         p1, p2 = int(time.mktime((datetime.now() - 12*timedelta(days=365)).timetuple())), int(time.mktime(datetime.now().timetuple()))
-        return pd.DataFrame({tick: self.get_historic_from_ticker(tick, p1, p2) for tick in tickers
-                             if tick != '' and self.get_historic_from_ticker(tick, p1, p2) is not None}).astype(float).fillna(0)
+        return pd.DataFrame({tick: self.current_data for tick in tickers
+                             if self.historic_from_ticker(tick, p1, p2) is not None}).astype(float).fillna(0)
 
-    def get_historic_from_ticker(self, tick, p1, p2):
+    def historic_from_ticker(self, tick, p1, p2):
         data = req.get(self.HISTORIC_API.format(tick, p1, p2), headers=self.HEADERS).text
         data = [i.split(',') for i in data.split('\n')]
         try: df = pd.DataFrame(data[1:], columns=data[0])[['Date', 'Close']]
-        except (KeyError, ValueError): return
+        except (KeyError, ValueError, TypeError, IndexError): return
         df.Close = df.Close.str.replace('null', 'nan', regex=False)
         df.Date = pd.to_datetime(df.Date.squeeze())
-        return df.set_index('Date').squeeze()
+        self.current_data = df.set_index('Date').squeeze()
+        return True
 
     def process_financial_data(self, summary, historic):
         stocks = pd.read_json(self.method(f"{self.API_ADDRESS}:{self.QUALITY_PORT}",

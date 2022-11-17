@@ -44,7 +44,7 @@ class StockValuator(Resource):
         size_score = 100/(1 + np.power(0.98, (df['size']/1e9)-200))
         cr_score = 100*np.power(4, -1*np.power(df['current_ratio']-2.25, 2))
         graham_score = 100/(1 + np.power(0.99, np.sqrt(22.5 * eps * bvps) - df['price']))
-        df['score'] = (size_score + cr_score + graham_score)/3
+        df['score'] = (size_score + cr_score + 2*graham_score)/4
         return df
 
 
